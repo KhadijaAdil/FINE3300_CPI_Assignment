@@ -2,9 +2,9 @@
 import pandas as pd
 
 #Next, let's create a list of all the provinces we'll be dealing with
-provinces = ["AB",
+provinces = ["Canada",
+             "AB",
              "BC",
-             "Canada",
              "MB",
              "NB",
              "NL",
@@ -42,11 +42,44 @@ for province in provinces:
 #thus, we must convert all of these pairs into a structured data frame
 df_combined = pd.DataFrame(all_new_data)
 
+#now, let's sort the data so that its filtered by to show all the item values by month (I want "January") and by province (I want "Canada")
+
 #QUESTION 1 ANSWER
-print("QUESTION 1 ANSWER")
+print("QUESTION 1 ANSWER:")
+print("THE FIRST 12 ROWS OF MY DATA FRAME")
+print(" ")
 print(df_combined.head(12))
+print(" ")
+
+print("OR IF WE WANT TO SEE THE FIRST 12 ROWS FOR JUST CANADA'S JANUARY CPI DATA AS PER THE TABLE IN THE ASSIGNMENT")
+print(" ")
+df_combined_filtered = pd.concat([df_combined[(df_combined["Jurisdiction"] == "Canada") & (df_combined["Month"] == "24-Jan")], df_combined[~((df_combined["Jurisdiction"] == "Canada") & (df_combined["Month"] == "24-Jan"))]])
+print(df_combined_filtered.head(12))
+#Please note, I am using the "~" and concatenate function because I still want to include all the rows that do not have "Canada" & "24-Jan"
 print("*"*100)
 
 #QUESTION 2 ANSWER
-#Average Month to Month Change (food, shelter, all-items excluding food and energy)
-df_combined[df_combined["Item"] == "food"]
+#We need to find the average month-to-month change in food, shelter, and all-items excluding food and energy
+#Thus, we have four broad steps:
+# 1. We need to filter our data frame for these specific items
+# 2. Then we need to number each of the months
+# 3. Then we need to find the average month to month % change for each item for each province
+# 4. Finally, we can calculate the average %change for each item
+
+#first, lets filter for our three items
+df_filtered_1 = df_combined[df_combined["Item"].isin(["Food", "Shelter", "All-items excluding food and energy"])].copy()
+#next, we must create a dictionary which maps our month names to numbers
+month_order = {"24-Jan":1, "24-Feb":2, "24-Mar":3, "24-Apr":4, "24-May":5, "24-Jun":6, "24-Jul":7, "24-Aug":8, "24-Sep":9, "24-Oct":10, "24-Nov":11, "24-Dec":12}
+df_filtered_1["Month_Num"] = df_filtered_1["Month"].map(month_order)
+#so now we have add a new column to df_filtered_1 which has a number for each month
+df_filtered_1 = df_filtered_1.sort_values(by=["Jurisdiction","Item","Month_Num"])
+#we have now filtered out data first by jurisdiction and then by item and finally by the numerical month value
+df_filtered_1["Pct_change"] = df_filtered_1.groupby(["Jurisdiction","Item"])["CPI"].pct_change()*100
+#now we have calculated the percentage change for each jurisdiction and item 
+avg_pct_change = df_filtered_1.groupby(["Item"])["Pct_change"].mean()
+#finally, we can calculate the average percertage change for each item across all jurisdictions
+print(" ")
+print("QUESTION 2 ANSWER:")
+print(" ")
+print("THE AVERAGE MONTH-TO-MONTH % CHANGE ACROSS THE FOLLOWING ITEMS IS AS FOLLOWS:")
+print(avg_pct_change)
