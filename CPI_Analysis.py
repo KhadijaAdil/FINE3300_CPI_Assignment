@@ -1,3 +1,4 @@
+#BASE MODEL
 #Let's start off by importing pandas since we know we'll be needing them
 import pandas as pd
 
@@ -42,9 +43,11 @@ for province in provinces:
 #thus, we must convert all of these pairs into a structured data frame
 df_combined = pd.DataFrame(all_new_data)
 
-#now, let's sort the data so that its filtered by to show all the item values by month (I want "January") and by province (I want "Canada")
+#now, let's sort the data so that its filtered by to show all the item values by month (I want "January") and by province (I want "AB")
 
+#************************************************************************************************************************************************************************************************************************************************
 #QUESTION 1 ANSWER
+print(" ")
 print("QUESTION 1 ANSWER:")
 print("THE FIRST 12 ROWS OF MY DATA FRAME")
 print(" ")
@@ -57,6 +60,8 @@ df_combined_filtered = pd.concat([df_combined[(df_combined["Jurisdiction"] == "C
 print(df_combined_filtered.head(12))
 #Please note, I am using the "~" and concatenate function because I still want to include all the rows that do not have "Canada" & "24-Jan"
 print("*"*100)
+
+#************************************************************************************************************************************************************************************************************************************************
 
 #QUESTION 2 ANSWER
 #We need to find the average month-to-month change in food, shelter, and all-items excluding food and energy
@@ -76,10 +81,84 @@ df_filtered_1 = df_filtered_1.sort_values(by=["Jurisdiction","Item","Month_Num"]
 #we have now filtered out data first by jurisdiction and then by item and finally by the numerical month value
 df_filtered_1["Pct_change"] = df_filtered_1.groupby(["Jurisdiction","Item"])["CPI"].pct_change()*100
 #now we have calculated the percentage change for each jurisdiction and item 
-avg_pct_change = df_filtered_1.groupby(["Item"])["Pct_change"].mean()
+avg_pct_change = df_filtered_1.groupby(["Jurisdiction", "Item"])["Pct_change"].mean().round(1)
+avg_pct_change_1 = avg_pct_change.round(1).astype(str)+"%"
 #finally, we can calculate the average percertage change for each item across all jurisdictions
 print(" ")
 print("QUESTION 2 ANSWER:")
 print(" ")
-print("THE AVERAGE MONTH-TO-MONTH % CHANGE ACROSS THE FOLLOWING ITEMS IS AS FOLLOWS:")
-print(avg_pct_change)
+print("THE AVERAGE MONTH-TO-MONTH % CHANGE ACROSS THE FOLLOWING ITEMS, IN EACH JURISDICTION IS AS FOLLOWS:")
+print(avg_pct_change_1)
+print("*"*100)
+
+#************************************************************************************************************************************************************************************************************************************************
+
+#QUESTION 3 ANSWER
+#to calculate the highest average change in each of the categories
+avg_pct_change_per_jur = df_filtered_1.groupby(["Item", "Jurisdiction"])["Pct_change"].mean()
+highest_change_per_item = avg_pct_change_per_jur.groupby("Item").idxmax()
+jurisdiction_names = []
+for item, jurisdiction in highest_change_per_item:
+    jurisdiction_names.append(jurisdiction)
+highest_change_values = avg_pct_change_per_jur.groupby("Item").max()
+formatted_pct_chg = []
+for value in highest_change_values:
+    formatted_pct_chg.append(f"{value:.1f}%")
+highest_change_jurisdiction_item = pd.DataFrame ({"Item":highest_change_per_item.index, " Jurisdiction With Highest Change": jurisdiction_names, " Highest Avg % Change" : formatted_pct_chg})
+print(" ")
+print("QUESTION 3 ANSWER:")
+print(" ")
+print("THE PROVINCES WHICH HAD THE HIGHEST AVERAGE CHANGE ACROSS EACH OF THE THREE CATEGORIES ARE:")
+print(" ")
+print(highest_change_jurisdiction_item)
+print("*"*100)
+
+#************************************************************************************************************************************************************************************************************************************************
+
+#QUESTION 4 ANSWER
+#to find the annual change in CPI for serviced across Canada and all provinces we have to follow 5 general steps
+#first, we must filter for services from the dataset
+#second, we must get the January and December prices for each store
+#third, we must calculate the annual percetage change by calculating [(dec price - jan prices)/jan prices]
+#then, we'll seperate out Canada's change and average the change for all the provinces
+#finally we'll create a table to show our results!
+
+#first, filter for services
+df_services = df_combined[df_combined["Item"] == "Services"]
+#then, we'll get Jan and Dec CPI per province
+jan_prices = df_services[df_services["Month"] == "24-Jan"].set_index("Jurisdiction")["CPI"]
+dec_prices = df_services[df_services["Month"] == "24-Dec"].set_index("Jurisdiction")["CPI"]
+#next, we'll calculate the annual percentage change
+annual_change_per_jurisdiction = ((dec_prices - jan_prices) / jan_prices) * 100
+#next, we'll extract canada's change and calculate the average for all the provinces
+canada_change = annual_change_per_jurisdiction["Canada"]
+provincial_change = annual_change_per_jurisdiction.drop("Canada").mean()
+#some quick formatting to make sure everything looks presentable
+canada_change = f"{canada_change.round(1)}%"
+provincial_change = f"{provincial_change.round(1)}%"
+#now, let's generate our data frame
+annual_change = pd.DataFrame({"Jurisdiction":["Canada", "All Provinces"], " Annual Change (%)": [canada_change, provincial_change]})
+print(" ")
+print("QUESTION 4 ANSWER:")
+print(" ")
+print("THE ANNUAL CHANGE IN CPI FOR SERVICES ACROSS CANADA AND ALL PROVINCES IS AS FOLLOWS:")
+print(" ")
+print(annual_change)
+print("*"*100)
+
+#************************************************************************************************************************************************************************************************************************************************
+
+#QUESTION 5 ANSWER
+#we must now find the region with the highest inflation in services
+highest_inflation_jurisdiction = annual_change_per_jurisdiction.idxmax()
+highest_inflation_value = annual_change_per_jurisdiction.max()
+highest_inflation_value = f"{highest_inflation_value:.1f}%"
+#our final data frame!
+highest_inflation_services = pd.DataFrame({"Jurisdiction":[highest_inflation_jurisdiction], " Annual Services Inflation": [highest_inflation_value]})
+print(" ")
+print("QUESTION 5 ANSWER:")
+print(" ")
+print("THE JURISDICTION WITH THE HIGHEST INFLATION IN SERVICES IS:")
+print(" ")
+print(highest_inflation_services)
+print("*"*100)
