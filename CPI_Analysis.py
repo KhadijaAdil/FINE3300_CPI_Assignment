@@ -130,18 +130,14 @@ jan_prices = df_services[df_services["Month"] == "24-Jan"].set_index("Jurisdicti
 dec_prices = df_services[df_services["Month"] == "24-Dec"].set_index("Jurisdiction")["CPI"]
 #next, we'll calculate the annual percentage change
 annual_change_per_jurisdiction = ((dec_prices - jan_prices) / jan_prices) * 100
-#next, we'll extract canada's change and calculate the average for all the provinces
-canada_change = annual_change_per_jurisdiction["Canada"]
-provincial_change = annual_change_per_jurisdiction.drop("Canada").mean()
 #some quick formatting to make sure everything looks presentable
-canada_change = f"{canada_change.round(1)}%"
-provincial_change = f"{provincial_change.round(1)}%"
+annual_change_per_jurisdiction = annual_change_per_jurisdiction.round(1).astype(str) + "%"
 #now, let's generate our data frame
-annual_change = pd.DataFrame({"Jurisdiction":["Canada", "All Provinces"], " Annual Change (%)": [canada_change, provincial_change]})
+annual_change = pd.DataFrame({"Jurisdiction":annual_change_per_jurisdiction.index, " Annual Change (%)": annual_change_per_jurisdiction.values})
 print(" ")
 print("QUESTION 4 ANSWER:")
 print(" ")
-print("THE ANNUAL CHANGE IN CPI FOR SERVICES ACROSS CANADA AND ALL PROVINCES IS AS FOLLOWS:")
+print("THE ANNUAL CHANGE IN CPI FOR SERVICES ACROSS CANADA AND ALL THE PROVINCES IS AS FOLLOWS:")
 print(" ")
 print(annual_change)
 print("*"*100)
@@ -152,7 +148,7 @@ print("*"*100)
 #we must now find the region with the highest inflation in services
 highest_inflation_jurisdiction = annual_change_per_jurisdiction.idxmax()
 highest_inflation_value = annual_change_per_jurisdiction.max()
-highest_inflation_value = f"{highest_inflation_value:.1f}%"
+highest_inflation_value = highest_inflation_value
 #our final data frame!
 highest_inflation_services = pd.DataFrame({"Jurisdiction":[highest_inflation_jurisdiction], " Annual Services Inflation": [highest_inflation_value]})
 print(" ")
